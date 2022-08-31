@@ -4079,6 +4079,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! jquery */ "jquery");
 /* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(jquery__WEBPACK_IMPORTED_MODULE_0__);
 
+/* jQuery is needed for the addSearchHTML method. I haven't figured out the replacement for $("body") */
 
 class Search {
   // 1. describe and create/initiate our object 
@@ -4089,6 +4090,9 @@ class Search {
     // this.openButton = document.querySelectorAll(".js-search-trigger")[1];
     // this.searchField = $("#search-term");
     // this.resultsDiv = $("#search-overlay__results");
+    this.addSearchHTML();
+    /* this needs to be coded first.*/
+
     this.isOverlayOpen = false;
     this.isSpinnerVisible = false;
     this.previousValue;
@@ -4130,7 +4134,7 @@ class Search {
           this.isSpinnerVisible = true;
         }
 
-        this.typingTimer = setTimeout(this.getResults.bind(this), 2000);
+        this.typingTimer = setTimeout(this.getResults.bind(this), 750);
       } else {
         this.resultsDiv.innerHTML = ``;
         this.isSpinnerVisible = false;
@@ -4149,13 +4153,17 @@ class Search {
      $.getJSON('http://fictional-university.local/wp-json/wp/v2/posts?search='+this.searchField.val())
         this.resultsDiv.html(``)
     */
-    fetch(`http://fictional-university.local/wp-json/wp/v2/posts?search=${this.searchField.value}`).then(response => response.json()).then(posts => {
+    jquery__WEBPACK_IMPORTED_MODULE_0___default().when(fetch(universityData.root_url + `/wp-json/wp/v2/posts?search=${this.searchField.value}`).then(response => response.json()), fetch(universityData.root_url + `/wp-json/wp/v2/pages?search=${this.searchField.value}`).then(response => response.json())).then((posts, pages) => {
+      let combinedResults = posts.concat(pages);
       this.resultsDiv.innerHTML = `
-              <h2 class="search-overlay__section-title">General Information</h2>
-              ${posts.length ? '<ul class="link-list min-list">' : '<p>No general information matches that search</p>'}
-                ${posts.map(item => `<li><a href="${item.link}">${item.title.rendered}</a></li>`).join('')}
-              ${posts.length ? '</ul>' : ''}   
-            `;
+                <h2 class="search-overlay__section-title">General Information</h2>
+                ${combinedResults.length ? '<ul class="link-list min-list">' : '<p>No general information matches that search</p>'}
+                  ${combinedResults.map(item => `<li><a href="${item.link}">${item.title.rendered}</a></li>`).join('')}
+                ${combinedResults.length ? '</ul>' : ''}   
+              `;
+      this.isSpinnerVisible = false;
+    }, () => {
+      this.resultsDiv.innerHTML = `<p>Unexpected error. Please try again later. </p>`;
     });
   }
 
@@ -4175,8 +4183,12 @@ class Search {
   openOverlay() {
     // this.searchOverlay.addClass("search-overlay--active")
     // $("body").addClass("body-no-scroll");
+    console.log(this.body);
     this.searchOverlay.classList.add("search-overlay--active");
-    this.body.classList.add("body-no-scroll");
+    this.body.classList.add("body-no-scroll"); // this.searchField.val('');
+
+    this.searchField.value = '';
+    setTimeout(() => this.searchField.focus(), 301);
     this.isOverlayOpen = true;
   }
 
@@ -4186,6 +4198,27 @@ class Search {
     this.searchOverlay.classList.remove("search-overlay--active");
     this.body.classList.remove("body-no-scroll");
     this.isOverlayOpen = false;
+  }
+
+  addSearchHTML() {
+    console.log(this.body); // this.body.appendChild(` this line didn't work. this.body was undefined.
+
+    jquery__WEBPACK_IMPORTED_MODULE_0___default()("body").append(`
+    <div class="search-overlay">
+      <div class="search-overlay__top">
+        <div class="container">
+          <i class="fa fa-search search-overlay__icon" aria-hidden="true"></i>
+          <input type="text" class="search-term" autocomplete="off" placeholder="What are you looking for?" id="search-term">
+          <i class="fa fa-window-close search-overlay__close" aria-hidden="true"></i>
+        </div>
+      </div>
+      <div class="container">
+        <div id="search-overlay__results">
+          
+        </div>
+      </div>
+    </div>
+    `);
   }
 
 }
