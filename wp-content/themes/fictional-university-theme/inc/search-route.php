@@ -34,6 +34,7 @@ function universitySearchResults($data) {
         'authorName' => get_the_author()
       ));
     }
+    
     if (get_post_type() == 'professor') {
       array_push($mainQueryResults['professors'], array(
         'title' => get_the_title(),
@@ -41,13 +42,24 @@ function universitySearchResults($data) {
         'image' => get_the_post_thumbnail_url(0, 'professorLandscape')
       ));
     }
+   
     if (get_post_type() == 'program') {
+      $relatedCampuses = get_field('related_campus');
+      if ($relatedCampuses) {
+        foreach($relatedCampuses as $campus) {
+          array_push($mainQueryResults['campuses'], array(
+            'title' => get_the_title($campus),
+            'permalink' => get_the_permalink($campus)
+          ));
+        }
+      }
       array_push($mainQueryResults['programs'], array(
         'title' => get_the_title(),
         'permalink' => get_the_permalink(),
         'id' => get_the_id()
       ));
     }
+   
     if (get_post_type() == 'event') {
       $eventDate = new DateTime(get_field('event_date'));
       $description = null;
@@ -85,12 +97,31 @@ function universitySearchResults($data) {
   }
 
   $programRelationshipQuery = new WP_Query(array(
-    'post_type' => 'professor',
+    'post_type' => array('professor', 'event'),
     'meta_query' => $programsMetaQuery
   ));
 
   while($programRelationshipQuery->have_posts()) {
-    $programRelationshipQuery->the_post();
+      $programRelationshipQuery->the_post();
+
+      if (get_post_type() == 'event') {
+        $eventDate = new DateTime(get_field('event_date'));
+        $description = null;
+        if (has_excerpt()) {
+          $description = get_the_excerpt();
+        } else {
+          $description = wp_trim_words(get_the_content(), 18);
+        }
+  
+        array_push($mainQueryResults['events'], array(
+          'title' => get_the_title(),
+          'permalink' => get_the_permalink(),
+          'month' => $eventDate->format('M'),
+          'day' => $eventDate->format('d'),
+          'description' => $description
+        ));
+      }
+
       if (get_post_type() == 'professor') {
         array_push($mainQueryResults['professors'], array(
           'title' => get_the_title(),
@@ -104,7 +135,10 @@ function universitySearchResults($data) {
   that professor may show up twice in a query. Lesson 78: Search Logic That's Aware of Relationships. The 
   array_values prevents an unwanted index value showing in postman. */
 
-  $mainQueryResults['professors'] = array_values(array_unique($mainQueryResults['professors'], SORT_REGULAR));
+  $mainQueryResults['professors'] = array_values(array_unique($mainQueryResults['professors'], 
+      SORT_REGULAR));
+  $mainQueryResults['events'] = array_values(array_unique($mainQueryResults['events'], 
+      SORT_REGULAR));
   }
   return $mainQueryResults;
 }

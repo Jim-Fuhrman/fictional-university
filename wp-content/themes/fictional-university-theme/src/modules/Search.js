@@ -1,4 +1,4 @@
-import $ from 'jquery';
+/* import $ from 'jquery'; */
 /* jQuery is needed for the addSearchHTML method. I haven't figured out the replacement for $("body") */
 class Search {
   // 1. describe and create/initiate our object 
@@ -16,7 +16,9 @@ class Search {
     this.isSpinnerVisible = false;
     this.previousValue;
     this.typingTimer;
-    this.openButton = document.querySelectorAll(".js-search-trigger")[1];
+    // the next line that's asterisked out was mine. the one after it is Brad's. 
+    // this.openButton = document.querySelectorAll(".js-search-trigger")[1];
+    this.openButton = document.querySelectorAll(".js-search-trigger");
     this.closeButton = document.querySelector(".search-overlay__close");
     this.searchOverlay = document.querySelector(".search-overlay");
     
@@ -34,7 +36,15 @@ class Search {
     // $(document).on("keydown", this.keyPressDispatcher.bind(this));
     // this.searchField.on("keyup", this.typingLogic.bind(this));
 
-    this.openButton.addEventListener('click', this.openOverlay.bind(this))
+    /* This next forEach loop is Brad's code. */
+    this.openButton.forEach(el => {
+      el.addEventListener("click", e => {
+        e.preventDefault()
+        this.openOverlay()
+      })
+    })
+
+    // this.openButton.addEventListener('click', this.openOverlay.bind(this))
     this.closeButton.addEventListener('click', this.closeOverlay.bind(this))
 
     addEventListener("keydown", this.keyPressDispatcher.bind(this))
@@ -45,7 +55,6 @@ class Search {
   typingLogic() {
  // if (this.searchField.val() != this.previousValue) {
     if (this.searchField.value != this.previousValue) {
-      console.log(`typingLogic is executing`)
       // we clear the timeout with each keystroke. 
       // Then when the user pauses for 2 seconds, our setTimeout function executes.  
       clearTimeout(this.typingTimer);
@@ -165,13 +174,14 @@ class Search {
   openOverlay() {
     // this.searchOverlay.addClass("search-overlay--active")
     // $("body").addClass("body-no-scroll");
-    console.log(this.body)
+    
     this.searchOverlay.classList.add("search-overlay--active")
     this.body.classList.add("body-no-scroll")
     // this.searchField.val('');
     this.searchField.value = '';
     setTimeout(() => this.searchField.focus(), 301);
     this.isOverlayOpen = true;
+    return false;
   }
 
   closeOverlay() {
@@ -184,24 +194,26 @@ class Search {
   }
 
   addSearchHTML() {
-    console.log(this.body)
     // this.body.appendChild(` this line didn't work. this.body was undefined.
-    $("body").append(`
-    <div class="search-overlay">
-      <div class="search-overlay__top">
+    // $("body").append(`
+    // the solution to this tough problem was to use document.body.insertAdjacentHTML("beforeend")
+    
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `
+      <div class="search-overlay">
+        <div class="search-overlay__top">
+          <div class="container">
+            <i class="fa fa-search search-overlay__icon" aria-hidden="true"></i>
+            <input type="text" class="search-term" autocomplete="off" placeholder="What are you looking for?" id="search-term">
+            <i class="fa fa-window-close search-overlay__close" aria-hidden="true"></i>
+          </div>
+        </div>
         <div class="container">
-          <i class="fa fa-search search-overlay__icon" aria-hidden="true"></i>
-          <input type="text" class="search-term" autocomplete="off" placeholder="What are you looking for?" id="search-term">
-          <i class="fa fa-window-close search-overlay__close" aria-hidden="true"></i>
+          <div id="search-overlay__results"></div>
         </div>
       </div>
-      <div class="container">
-        <div id="search-overlay__results">
-          
-        </div>
-      </div>
-    </div>
-    `)
+      `)
   }
 }
 
