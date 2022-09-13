@@ -4,6 +4,8 @@
 /* If the has_archive doesn't work, go into wp-admin to Settings then Permalinks then just click Save Changes at the bottom. */
 function university_post_types() {
   register_post_type('campus', array(
+    'capability_type' => 'campus',
+    'map_meta_cap' => true, 
     'show_in_rest' => true,
     'supports' => array('title', 'editor', 'excerpt'),
     'rewrite' => array('slug' => 'campuses'),
@@ -20,7 +22,8 @@ function university_post_types() {
   ));
 
   register_post_type('event', array(
-    'show_in_rest' => true,
+    'capability_type' => 'event',   /* lesson 84: user roles and permissions */
+    'map_meta_cap' => true,   /* lesson 84: user roles and permissions */
     'supports' => array('title', 'editor', 'excerpt'),
     'rewrite' => array('slug' => 'events'),
     'has_archive' => true,   
